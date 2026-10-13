@@ -30,6 +30,8 @@ Managing micro-loans manually can lead to delayed approvals, inconsistent risk e
 - Admin dashboard
 - Report generation
 - Notification support
+- Document and KYC verification
+- Payment collection and transaction    management
 
 ## Technology Stack
 
