@@ -16,6 +16,7 @@ public record LoanApplicationRequest(
                 value = "500000.00",
                 message = "Maximum loan amount is 500000"
         )
+        @Digits(integer = 10, fraction = 2)
         BigDecimal loanAmount,
 
         @NotNull(message = "Loan purpose is required")
@@ -37,6 +38,7 @@ public record LoanApplicationRequest(
                 value = "0.00",
                 message = "Existing monthly debt cannot be negative"
         )
+        @Digits(integer = 10, fraction = 2)
         BigDecimal existingMonthlyDebt
 ) {
 }

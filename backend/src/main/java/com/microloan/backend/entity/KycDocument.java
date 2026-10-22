@@ -48,8 +48,10 @@ public class KycDocument {
     @Column(length = 300)
     private String rejectionReason;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private LocalDateTime uploadedAt;
+
+    public void setUploadedAt(LocalDateTime uploadedAt) { this.uploadedAt = uploadedAt; }
 
     private LocalDateTime verifiedAt;
 

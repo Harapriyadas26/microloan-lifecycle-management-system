@@ -23,6 +23,15 @@ public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
 
+    @Bean
+    public org.springframework.security.core.userdetails.UserDetailsService userDetailsService() {
+        return username -> { throw new org.springframework.security.core.userdetails.UsernameNotFoundException("JWT authentication required"); };
+    }
+
+
+    @org.springframework.beans.factory.annotation.Value("${app.cors.origins:http://localhost:5173}")
+    private String corsOrigins;
+
     public SecurityConfig(JwtAuthenticationFilter jwtAuthenticationFilter) {
         this.jwtAuthenticationFilter = jwtAuthenticationFilter;
     }
@@ -33,7 +42,7 @@ public class SecurityConfig {
     }
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http)
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, tools.jackson.databind.ObjectMapper mapper)
             throws Exception {
 
         http
@@ -45,10 +54,19 @@ public class SecurityConfig {
                 .httpBasic(basic -> basic.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .requestMatchers("/api/auth/**").permitAll()
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/auth/register", "/api/auth/login").permitAll()
+                        .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs", "/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                .exceptionHandling(errors -> errors
+                    .authenticationEntryPoint((req,res,ex) -> {
+                        res.setStatus(401);res.setContentType("application/json");
+                        mapper.writeValue(res.getOutputStream(),com.microloan.backend.error.ApiError.of(401,"Authentication required",req.getRequestURI(),java.util.Map.of()));
+                    })
+                    .accessDeniedHandler((req,res,ex) -> {
+                        res.setStatus(403);res.setContentType("application/json");
+                        mapper.writeValue(res.getOutputStream(),com.microloan.backend.error.ApiError.of(403,"Access denied",req.getRequestURI(),java.util.Map.of()));
+                    }))
                 .addFilterBefore(
                         jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class
@@ -61,7 +79,7 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
 
-        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedOrigins(List.of(corsOrigins.split(",")));
         configuration.setAllowedMethods(
                 List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
         );

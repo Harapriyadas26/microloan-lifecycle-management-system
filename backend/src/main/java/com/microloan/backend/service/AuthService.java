@@ -43,6 +43,9 @@ public class AuthService {
             );
         }
 
+        if(request.password().getBytes(java.nio.charset.StandardCharsets.UTF_8).length>72)
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Password must not exceed 72 UTF-8 bytes");
+
         User user = new User();
         user.setFullName(request.fullName().trim());
         user.setEmail(email);
@@ -58,6 +61,10 @@ public class AuthService {
     @Transactional(readOnly = true)
     public AuthResponse login(LoginRequest request) {
         String email = normalizeEmail(request.email());
+
+        if (request.password().getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 72) {
+            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED, "Invalid email or password");
+        }
 
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new ResponseStatusException(

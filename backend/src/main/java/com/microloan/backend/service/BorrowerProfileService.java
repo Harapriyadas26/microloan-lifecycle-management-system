@@ -30,7 +30,7 @@ public class BorrowerProfileService {
             String email,
             BorrowerProfileRequest request) {
 
-        User user = userRepository.findByEmailIgnoreCase(email)
+        User user = userRepository.findLockedByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.UNAUTHORIZED,
                         "User account was not found"
@@ -54,7 +54,7 @@ public class BorrowerProfileService {
         profile.setEmploymentType(request.employmentType());
         profile.setMonthlyIncome(request.monthlyIncome());
 
-        return toResponse(profileRepository.save(profile));
+        return toResponse(profileRepository.saveAndFlush(profile));
     }
 
     @Transactional(readOnly = true)

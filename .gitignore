@@ -1,0 +1,12 @@
+# Local secrets and generated application artifacts
+.env
+.env.*
+!.env.example
+node_modules/
+frontend/dist/
+frontend/coverage/
+*.log
+
+frontend/test-results/
+frontend/playwright-report/
+docs/demo/generated/

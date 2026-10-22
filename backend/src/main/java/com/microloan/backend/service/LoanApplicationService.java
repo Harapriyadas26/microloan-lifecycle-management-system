@@ -19,6 +19,7 @@ public class LoanApplicationService {
 
     private final LoanApplicationRepository loanApplicationRepository;
     private final UserRepository userRepository;
+    private final RiskEvaluationService riskEvaluationService;
     private final BorrowerProfileRepository borrowerProfileRepository;
     private final KycDocumentRepository kycDocumentRepository;
 
@@ -26,12 +27,14 @@ public class LoanApplicationService {
             LoanApplicationRepository loanApplicationRepository,
             UserRepository userRepository,
             BorrowerProfileRepository borrowerProfileRepository,
-            KycDocumentRepository kycDocumentRepository
+            KycDocumentRepository kycDocumentRepository,
+            RiskEvaluationService riskEvaluationService
     ) {
         this.loanApplicationRepository = loanApplicationRepository;
         this.userRepository = userRepository;
         this.borrowerProfileRepository = borrowerProfileRepository;
         this.kycDocumentRepository = kycDocumentRepository;
+        this.riskEvaluationService = riskEvaluationService;
     }
 
     @Transactional
@@ -39,7 +42,7 @@ public class LoanApplicationService {
             String email,
             LoanApplicationRequest request
     ) {
-        User borrower = userRepository.findByEmailIgnoreCase(email)
+        User borrower = userRepository.findLockedByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Borrower not found"
@@ -107,7 +110,8 @@ public class LoanApplicationService {
         application.setStatus(LoanStatus.SUBMITTED);
 
         LoanApplication savedApplication =
-                loanApplicationRepository.save(application);
+                loanApplicationRepository.saveAndFlush(application);
+        riskEvaluationService.evaluate(savedApplication);
 
         return toResponse(savedApplication);
     }
@@ -117,7 +121,7 @@ public class LoanApplicationService {
         return loanApplicationRepository
                 .findByBorrowerEmailIgnoreCaseOrderBySubmittedAtDesc(email)
                 .stream()
-                .map(this::toResponse)
+                .map(LoanApplicationService::toResponse)
                 .toList();
     }
 
@@ -144,6 +148,7 @@ public class LoanApplicationService {
             String email,
             Long applicationId
     ) {
+        userRepository.findLockedByEmail(email).orElseThrow();
         LoanApplication application = loanApplicationRepository
                 .findByIdAndBorrowerEmailIgnoreCase(
                         applicationId,
@@ -166,7 +171,7 @@ public class LoanApplicationService {
         application.setStatus(LoanStatus.CANCELLED);
 
         return toResponse(
-                loanApplicationRepository.save(application)
+                loanApplicationRepository.saveAndFlush(application)
         );
     }
 
@@ -178,7 +183,7 @@ public class LoanApplicationService {
         return description.trim();
     }
 
-    private LoanApplicationResponse toResponse(
+    public static LoanApplicationResponse toResponse(
             LoanApplication application
     ) {
         User borrower = application.getBorrower();

@@ -7,6 +7,9 @@ import java.time.LocalDateTime;
 
 public record KycDocumentResponse(
         Long id,
+        Long borrowerId,
+        String borrowerName,
+        String borrowerEmail,
         DocumentType documentType,
         String maskedDocumentNumber,
         String originalFileName,

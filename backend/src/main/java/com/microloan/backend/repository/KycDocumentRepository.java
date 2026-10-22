@@ -11,6 +11,10 @@ import java.util.Optional;
 public interface KycDocumentRepository
         extends JpaRepository<KycDocument, Long> {
 
+    List<KycDocument> findAllByOrderByUploadedAtDesc();
+
+    Optional<KycDocument> findByIdAndUserEmailIgnoreCase(Long id, String email);
+
     List<KycDocument> findByUserEmailIgnoreCaseOrderByUploadedAtDesc(
             String email
     );

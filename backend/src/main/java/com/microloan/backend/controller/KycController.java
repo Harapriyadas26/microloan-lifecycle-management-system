@@ -13,6 +13,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
+@io.swagger.v3.oas.annotations.security.SecurityRequirement(name="bearerAuth")
 @RestController
 @RequestMapping("/api/borrower/kyc")
 @PreAuthorize("hasRole('BORROWER')")
@@ -24,7 +25,8 @@ public class KycController {
         this.kycService = kycService;
     }
 
-    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @io.swagger.v3.oas.annotations.Operation(summary="upload Document")
+ @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<KycDocumentResponse> uploadDocument(
             @RequestParam DocumentType documentType,
             @RequestParam String documentNumber,
@@ -43,7 +45,8 @@ public class KycController {
                 .body(response);
     }
 
-    @GetMapping
+    @io.swagger.v3.oas.annotations.Operation(summary="get My Documents")
+ @GetMapping
     public ResponseEntity<List<KycDocumentResponse>> getMyDocuments(
             Authentication authentication
     ) {
@@ -51,5 +54,12 @@ public class KycController {
                 kycService.getMyDocuments(authentication.getName());
 
         return ResponseEntity.ok(documents);
+    }
+
+    @io.swagger.v3.oas.annotations.Operation(summary="file")
+ @GetMapping("/{id}/file")
+    public ResponseEntity<org.springframework.core.io.Resource> file(@PathVariable Long id,
+        @RequestParam(defaultValue="false") boolean download,Authentication auth) {
+        return kycService.file(id,auth.getName(),download);
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@io.swagger.v3.oas.annotations.security.SecurityRequirements
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -19,7 +20,8 @@ public class AuthController {
         this.authService = authService;
     }
 
-    @PostMapping("/register")
+    @io.swagger.v3.oas.annotations.Operation(summary="register")
+ @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(
             @Valid @RequestBody RegisterRequest request) {
 
@@ -28,7 +30,8 @@ public class AuthController {
                 .body(authService.register(request));
     }
 
-    @PostMapping("/login")
+    @io.swagger.v3.oas.annotations.Operation(summary="login")
+ @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(
             @Valid @RequestBody LoginRequest request) {
 

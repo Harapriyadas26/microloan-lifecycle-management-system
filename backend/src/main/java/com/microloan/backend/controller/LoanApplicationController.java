@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@io.swagger.v3.oas.annotations.security.SecurityRequirement(name="bearerAuth")
 @RestController
 @RequestMapping("/api/borrower/loans")
 @PreAuthorize("hasRole('BORROWER')")
@@ -25,7 +26,8 @@ public class LoanApplicationController {
         this.loanApplicationService = loanApplicationService;
     }
 
-    @PostMapping
+    @io.swagger.v3.oas.annotations.Operation(summary="submit Application")
+ @PostMapping
     public ResponseEntity<LoanApplicationResponse> submitApplication(
             @Valid @RequestBody LoanApplicationRequest request,
             Authentication authentication
@@ -41,7 +43,8 @@ public class LoanApplicationController {
                 .body(response);
     }
 
-    @GetMapping
+    @io.swagger.v3.oas.annotations.Operation(summary="get My Applications")
+ @GetMapping
     public ResponseEntity<List<LoanApplicationResponse>>
     getMyApplications(Authentication authentication) {
 
@@ -52,7 +55,8 @@ public class LoanApplicationController {
         );
     }
 
-    @GetMapping("/{applicationId}")
+    @io.swagger.v3.oas.annotations.Operation(summary="get My Application")
+ @GetMapping("/{applicationId}")
     public ResponseEntity<LoanApplicationResponse> getMyApplication(
             @PathVariable Long applicationId,
             Authentication authentication
@@ -65,7 +69,8 @@ public class LoanApplicationController {
         );
     }
 
-    @PatchMapping("/{applicationId}/cancel")
+    @io.swagger.v3.oas.annotations.Operation(summary="cancel Application")
+ @PatchMapping("/{applicationId}/cancel")
     public ResponseEntity<LoanApplicationResponse> cancelApplication(
             @PathVariable Long applicationId,
             Authentication authentication

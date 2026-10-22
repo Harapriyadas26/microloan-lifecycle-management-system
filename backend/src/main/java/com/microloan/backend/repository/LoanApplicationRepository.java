@@ -11,6 +11,12 @@ import java.util.Optional;
 public interface LoanApplicationRepository
         extends JpaRepository<LoanApplication, Long> {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @org.springframework.data.jpa.repository.Query("select a from LoanApplication a where a.id = :id")
+    Optional<LoanApplication> findLockedById(@org.springframework.data.repository.query.Param("id") Long id);
+
+    List<LoanApplication> findAllByOrderBySubmittedAtDesc();
+
     List<LoanApplication>
     findByBorrowerEmailIgnoreCaseOrderBySubmittedAtDesc(String email);
 

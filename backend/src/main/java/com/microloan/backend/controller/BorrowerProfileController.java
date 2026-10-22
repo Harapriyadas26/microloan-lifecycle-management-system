@@ -9,6 +9,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+@io.swagger.v3.oas.annotations.security.SecurityRequirement(name="bearerAuth")
 @RestController
 @RequestMapping("/api/borrower/profile")
 @PreAuthorize("hasRole('BORROWER')")
@@ -20,7 +21,8 @@ public class BorrowerProfileController {
         this.profileService = profileService;
     }
 
-    @PutMapping
+    @io.swagger.v3.oas.annotations.Operation(summary="save Profile")
+ @PutMapping
     public ResponseEntity<BorrowerProfileResponse> saveProfile(
             Authentication authentication,
             @Valid @RequestBody BorrowerProfileRequest request) {
@@ -30,7 +32,8 @@ public class BorrowerProfileController {
         );
     }
 
-    @GetMapping
+    @io.swagger.v3.oas.annotations.Operation(summary="get Profile")
+ @GetMapping
     public ResponseEntity<BorrowerProfileResponse> getProfile(
             Authentication authentication) {
 
