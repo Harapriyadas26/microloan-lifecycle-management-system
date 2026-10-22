@@ -19,6 +19,7 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import tools.jackson.databind.ObjectMapper;
+import tools.jackson.core.type.TypeReference;
 
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -105,7 +106,7 @@ class WorkflowIntegrationTests {
     Map<String, Object> result = new HashMap<>();
     if (response.body().startsWith("{")) result = mapper.readValue(
       response.body(),
-      Map.class
+      new TypeReference<Map<String, Object>>() {}
     );
     return new Reply(response.statusCode(), result);
   }
@@ -213,7 +214,7 @@ class WorkflowIntegrationTests {
       .POST(HttpRequest.BodyPublishers.ofByteArray(body.toByteArray()))
       .build();
     var res = client.send(req, HttpResponse.BodyHandlers.ofString());
-    return new Reply(res.statusCode(), mapper.readValue(res.body(), Map.class));
+    return new Reply(res.statusCode(), mapper.readValue(res.body(), new TypeReference<Map<String, Object>>() {}));
   }
 
   byte[] pdf() {

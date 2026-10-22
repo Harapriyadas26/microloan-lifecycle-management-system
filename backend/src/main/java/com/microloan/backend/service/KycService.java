@@ -78,7 +78,7 @@ public class KycService {
         }
 
         String oldStoredFileName = document.getStoredFileName();
-        if(file.getSize()>maxFileSize.toBytes()) throw new ResponseStatusException(HttpStatus.PAYLOAD_TOO_LARGE,"Document exceeds configured size limit");
+        if(file.getSize()>maxFileSize.toBytes()) throw new ResponseStatusException(HttpStatus.CONTENT_TOO_LARGE,"Document exceeds configured size limit");
         validateSignature(file);
         String contentType = file.getContentType().toLowerCase(Locale.ROOT);
         String extension = getExtension(contentType);
