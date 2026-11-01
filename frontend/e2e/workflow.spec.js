@@ -113,6 +113,8 @@ test("borrower registration through officer approval and borrower outcome", asyn
   ).toBeVisible();
   await officer.getByRole("button", { name: "Recalculate assessment" }).click();
   await expect(officer.getByText("APPROVE", { exact: true })).toBeVisible();
+  await officer.getByRole("button", { name: "Run bank simulation" }).click();
+  await expect(officer.getByText(/VERIFIED: declared/)).toBeVisible();
   await officer
     .getByLabel("Decision reason")
     .fill("Verified demo documents and affordable obligations");

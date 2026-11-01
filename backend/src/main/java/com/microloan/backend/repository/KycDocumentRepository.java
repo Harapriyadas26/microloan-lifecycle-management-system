@@ -27,4 +27,7 @@ public interface KycDocumentRepository
     List<KycDocument> findByStatusOrderByUploadedAtAsc(
             KycStatus status
     );
+
+    boolean existsByDocumentTypeAndDocumentNumberAndUserIdNotAndStatusNot(
+            DocumentType type, String number, Long userId, KycStatus status);
 }

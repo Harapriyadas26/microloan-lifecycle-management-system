@@ -187,6 +187,12 @@ class WorkflowIntegrationTests {
 
   Reply upload(String token, String type, String mime, byte[] bytes)
     throws Exception {
+    return uploadWithNumber(token, type, mime, bytes,
+      "DEMO" + Integer.toUnsignedString(token.hashCode(), 16).toUpperCase() + "234A");
+  }
+
+  Reply uploadWithNumber(String token, String type, String mime, byte[] bytes, String fictionalNumber)
+    throws Exception {
     String boundary = "MicroloanTestBoundary";
     String head =
       "--" +
@@ -195,7 +201,7 @@ class WorkflowIntegrationTests {
       type +
       "\r\n--" +
       boundary +
-      "\r\nContent-Disposition: form-data; name=\"documentNumber\"\r\n\r\nDEMOP1234A\r\n--" +
+      "\r\nContent-Disposition: form-data; name=\"documentNumber\"\r\n\r\n" + fictionalNumber + "\r\n--" +
       boundary +
       "\r\nContent-Disposition: form-data; name=\"file\"; filename=\"demo.pdf\"\r\nContent-Type: " +
       mime +
@@ -369,7 +375,7 @@ class WorkflowIntegrationTests {
     var first = upload(t, "PAN", "application/pdf", pdf());
     assertEquals(201, first.status());
     long id = ((Number) first.body().get("id")).longValue();
-    assertEquals("******234A", first.body().get("maskedDocumentNumber"));
+    assertTrue(((String) first.body().get("maskedDocumentNumber")).endsWith("234A"));
     assertFalse(first.body().containsKey("storedFileName"));
     assertEquals(
       200,
@@ -397,6 +403,41 @@ class WorkflowIntegrationTests {
       call("PATCH", "/api/officer/kyc/" + id + "/verify", o, null).status()
     );
     assertEquals(409, upload(t, "PAN", "application/pdf", pdf()).status());
+  }
+
+  @Test
+  void duplicateKycRequiresOfficerConflictResolution() throws Exception {
+    String first = (String) register().get("token");
+    String second = (String) register().get("token");
+    String officer = officer();
+    String number = "DEMO-DUPLICATE-234A";
+    var a = uploadWithNumber(first, "PAN", "application/pdf", pdf(), number);
+    var b = uploadWithNumber(second, "PAN", "application/pdf", pdf(), number);
+    long firstId = ((Number) a.body().get("id")).longValue();
+    long secondId = ((Number) b.body().get("id")).longValue();
+    assertEquals("CONFLICT", call("PATCH", "/api/officer/kyc/" + firstId + "/verify", officer, null)
+      .body().get("status"));
+    assertEquals(200, call("PATCH", "/api/officer/kyc/" + secondId + "/reject", officer,
+      Map.of("reason", "Duplicate fictional ID" )).status());
+    assertEquals("VERIFIED", call("PATCH", "/api/officer/kyc/" + firstId + "/verify", officer, null)
+      .body().get("status"));
+  }
+
+  @Test
+  void loanOfficerCannotSanctionAboveLimit() throws Exception {
+    var s = setup();
+    String officer = officer();
+    assertEquals(200, call("PATCH", "/api/borrower/loans/" + s.loan() + "/cancel", s.token(), null).status());
+    var larger = new HashMap<>(loan());
+    larger.put("loanAmount", 150000);
+    long id = ((Number) call("POST", "/api/borrower/loans", s.token(), larger).body().get("id")).longValue();
+    String base = "/api/officer/loans/" + id;
+    assertEquals(200, call("PATCH", "/api/officer/kyc/" + s.kyc() + "/verify", officer, null).status());
+    assertEquals(200, call("PATCH", base + "/review", officer, null).status());
+    assertEquals(200, call("POST", base + "/income-simulation?scenario=MATCH", officer, null).status());
+    assertEquals(403, call("POST", base + "/decision", officer, Map.of(
+      "decision", "APPROVED", "reason", "Fictional income checked", "approvedAmount", 150000,
+      "annualInterestRate", 12)).status());
   }
 
   @Test
@@ -524,6 +565,12 @@ class WorkflowIntegrationTests {
         .body()
         .get("recommendation")
     );
+    assertEquals(409, call("POST", base + "/decision", o, approve).status());
+    assertEquals("CONFLICT", call("POST", base + "/income-simulation?scenario=CONFLICT", o, null)
+      .body().get("status"));
+    assertEquals(409, call("POST", base + "/decision", o, approve).status());
+    assertEquals("VERIFIED", call("POST", base + "/income-simulation?scenario=MATCH", o, null)
+      .body().get("status"));
     var tooMuch = new HashMap<>(approve);
     tooMuch.put("approvedAmount", 100001);
     assertEquals(400, call("POST", base + "/decision", o, tooMuch).status());

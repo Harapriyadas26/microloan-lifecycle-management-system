@@ -23,7 +23,8 @@ export default function LoanDetailsPage({ officer = false }) {
     [busy, setBusy] = useState(false),
     [confirm, setConfirm] = useState(null),
     [decision, setDecision] = useState("APPROVED"),
-    [success, setSuccess] = useState("");
+    [success, setSuccess] = useState(""),
+    [bankScenario, setBankScenario] = useState("MATCH");
   async function action(path, method = "POST", body) {
     setBusy(true);
     setError(null);
@@ -90,6 +91,30 @@ export default function LoanDetailsPage({ officer = false }) {
               </div>
             </section>
             <div className="two-column">
+              {officer && active && (
+                <section className="panel">
+                  <h2>Fictional bank income simulation</h2>
+                  <p>Demo data only. This does not connect to a real bank or prove real income.</p>
+                  <Field label="Bank scenario" as="select" value={bankScenario}
+                    onChange={(e) => setBankScenario(e.target.value)}>
+                    <option value="MATCH">Matching salary credits</option>
+                    <option value="REVIEW">Moderate mismatch</option>
+                    <option value="CONFLICT">Major income conflict</option>
+                  </Field>
+                  <button className="secondary" disabled={busy}
+                    onClick={() => action(base + "/income-simulation?scenario=" + bankScenario)}>
+                    Run bank simulation
+                  </button>
+                  {d.incomeVerification && <p role="status">
+                    {d.incomeVerification.status}: declared {money(d.incomeVerification.declaredIncome)},
+                    simulated credits {money(d.incomeVerification.observedIncome)}.
+                  </p>}
+                  {d.incomeVerification && <p className="muted">
+                    Six fictional monthly credits: {d.incomeVerification.monthlyCredits.map(money).join(", ")}.
+                    Source: {d.incomeVerification.source}.
+                  </p>}
+                </section>
+              )}
               <section className="panel">
                 <div className="row">
                   <h2>Risk assessment</h2>
@@ -151,6 +176,7 @@ export default function LoanDetailsPage({ officer = false }) {
                         </button>
                       </p>
                     )}
+                    {officer && <p className="muted">Approval requires verified KYC and matching simulated income. Loan officers may sanction up to ₹1,00,000; larger approvals require an ADMIN.</p>}
                   </>
                 ) : (
                   <p>No assessment available.</p>
@@ -158,6 +184,7 @@ export default function LoanDetailsPage({ officer = false }) {
               </section>
               <section className="panel">
                 <h2>{d.decision ? "Final decision" : "What happens next?"}</h2>
+                {officer && !active && d.incomeVerification && <p>Income simulation: {d.incomeVerification.status}</p>}
                 {d.decision ? (
                   <>
                     <StatusBadge status={d.decision.decision} />

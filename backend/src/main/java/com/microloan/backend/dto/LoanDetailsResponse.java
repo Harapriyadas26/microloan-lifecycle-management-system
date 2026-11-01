@@ -7,5 +7,6 @@ public record LoanDetailsResponse(
   BorrowerProfileResponse profile,
   List<KycDocumentResponse> kycDocuments,
   RiskAssessmentResponse risk,
-  LoanDecisionResponse decision
+  LoanDecisionResponse decision,
+  IncomeVerificationResponse incomeVerification
 ) {}

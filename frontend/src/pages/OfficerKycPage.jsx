@@ -75,7 +75,7 @@ export default function OfficerKycPage() {
             onChange={(e) => setStatus(e.target.value)}
           >
             <option value="">All statuses</option>
-            {["PENDING", "VERIFIED", "REJECTED"].map((s) => (
+            {["PENDING", "CONFLICT", "VERIFIED", "REJECTED"].map((s) => (
               <option key={s}>{s}</option>
             ))}
           </Field>
@@ -117,7 +117,7 @@ export default function OfficerKycPage() {
                   Download
                 </button>
               </div>
-              {d.status === "PENDING" && (
+              {["PENDING", "CONFLICT"].includes(d.status) && (
                 <form
                   className="review-form"
                   onSubmit={(e) => {

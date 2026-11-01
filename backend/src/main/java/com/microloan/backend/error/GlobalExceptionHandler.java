@@ -120,6 +120,8 @@ public class GlobalExceptionHandler {
     Exception e,
     HttpServletRequest r
   ) {
+    org.slf4j.LoggerFactory.getLogger(GlobalExceptionHandler.class)
+      .error("Request failed at {}", r.getRequestURI(), e);
     return response(500, "Unable to complete the request", r, Map.of());
   }
 

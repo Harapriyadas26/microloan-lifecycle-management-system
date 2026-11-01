@@ -318,8 +318,15 @@ public class KycService {
         userRepository.findLockedByEmail(found.getUser().getEmail()).orElseThrow();
         // Refresh after waiting for a concurrent replacement/decision on this user.
         entityManager.refresh(found);
-        if(found.getStatus()!=KycStatus.PENDING)
-            throw new ResponseStatusException(HttpStatus.CONFLICT,"Only pending documents may be verified or rejected");
+        if(found.getStatus()!=KycStatus.PENDING && found.getStatus()!=KycStatus.CONFLICT)
+            throw new ResponseStatusException(HttpStatus.CONFLICT,"Only pending or conflicted documents may be reviewed");
+        if (verify && kycDocumentRepository.existsByDocumentTypeAndDocumentNumberAndUserIdNotAndStatusNot(
+                found.getDocumentType(), found.getDocumentNumber(), found.getUser().getId(), KycStatus.REJECTED)) {
+            found.setStatus(KycStatus.CONFLICT);
+            found.setRejectionReason("Document number is linked to another borrower; reject or resolve the duplicate before verification");
+            kycDocumentRepository.saveAndFlush(found);
+            return toResponse(found);
+        }
         if(!verify && (reason==null || reason.trim().length()<5 || reason.trim().length()>300))
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST,"Provide a rejection reason of 5 to 300 characters");
         found.setStatus(verify?KycStatus.VERIFIED:KycStatus.REJECTED);

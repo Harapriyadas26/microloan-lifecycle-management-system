@@ -19,6 +19,7 @@ public class LoanDecisionService {
   private final BorrowerProfileService profiles;
   private final KycService kyc;
   private final RiskEvaluationService risks;
+  private final IncomeVerificationService income;
 
   public LoanDecisionService(
     LoanApplicationRepository l,
@@ -26,7 +27,8 @@ public class LoanDecisionService {
     UserRepository u,
     BorrowerProfileService p,
     KycService k,
-    RiskEvaluationService r
+    RiskEvaluationService r,
+    IncomeVerificationService income
   ) {
     loans = l;
     decisions = d;
@@ -34,6 +36,7 @@ public class LoanDecisionService {
     profiles = p;
     kyc = k;
     risks = r;
+    this.income = income;
   }
 
   @Transactional(readOnly = true)
@@ -63,7 +66,8 @@ public class LoanDecisionService {
       profiles.getProfile(email),
       kyc.getMyDocuments(email),
       risks.get(id),
-      decisions.findByApplicationId(id).map(this::toResponse).orElse(null)
+      decisions.findByApplicationId(id).map(this::toResponse).orElse(null),
+      income.get(id)
     );
   }
 
@@ -83,6 +87,13 @@ public class LoanDecisionService {
     LoanApplication a = locked(id);
     requireActive(a);
     return risks.evaluate(a);
+  }
+
+  @Transactional
+  public IncomeVerificationResponse simulateIncome(Long id, String scenario) {
+    LoanApplication a = locked(id);
+    requireActive(a);
+    return income.simulate(a, scenario);
   }
 
   @Transactional
@@ -113,6 +124,15 @@ public class LoanDecisionService {
     // Refresh mutable profile/KYC inputs at the final decision, under the borrower's lock.
     risks.evaluate(a);
     if (request.decision() == DecisionType.APPROVED) {
+      if (kyc.getMyDocuments(a.getBorrower().getEmail()).stream()
+        .anyMatch(d -> d.status() == KycStatus.CONFLICT)) throw error(
+          HttpStatus.CONFLICT, "Resolve KYC conflicts before approval");
+      IncomeVerificationResponse evidence = income.get(id);
+      if (evidence == null || !"VERIFIED".equals(evidence.status())) throw error(
+        HttpStatus.CONFLICT, "Verified simulated income evidence is required for approval"
+      );
+      if (evidence.declaredIncome().compareTo(profiles.getProfile(a.getBorrower().getEmail()).monthlyIncome()) != 0)
+        throw error(HttpStatus.CONFLICT, "Income changed; run the bank simulation again");
       if (
         kyc
           .getMyDocuments(a.getBorrower().getEmail())
@@ -141,6 +161,10 @@ public class LoanDecisionService {
     if (
       officer.getRole() != Role.LOAN_OFFICER && officer.getRole() != Role.ADMIN
     ) throw error(HttpStatus.FORBIDDEN, "Officer access required");
+    if (request.decision() == DecisionType.APPROVED
+      && request.approvedAmount().compareTo(new java.math.BigDecimal("100000")) > 0
+      && officer.getRole() != Role.ADMIN) throw error(HttpStatus.FORBIDDEN,
+        "Approval above 100000 requires the sanction manager (ADMIN) role");
     LoanDecision d = new LoanDecision();
     d.setApplication(a);
     d.setDecision(request.decision());

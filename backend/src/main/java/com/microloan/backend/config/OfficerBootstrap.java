@@ -25,9 +25,14 @@ public class OfficerBootstrap implements CommandLineRunner {
 
   @Override
   public void run(String... args) {
-    String name = env.getProperty("APP_OFFICER_NAME"),
-      email = env.getProperty("APP_OFFICER_EMAIL"),
-      password = env.getProperty("APP_OFFICER_PASSWORD");
+    create("APP_OFFICER", Role.LOAN_OFFICER);
+    create("APP_SANCTION", Role.ADMIN);
+  }
+
+  private void create(String prefix, Role role) {
+    String name = env.getProperty(prefix + "_NAME"),
+      email = env.getProperty(prefix + "_EMAIL"),
+      password = env.getProperty(prefix + "_PASSWORD");
     if (
       name == null ||
       name.isBlank() ||
@@ -51,7 +56,7 @@ public class OfficerBootstrap implements CommandLineRunner {
     user.setFullName(name.trim());
     user.setEmail(email);
     user.setPasswordHash(encoder.encode(password));
-    user.setRole(Role.LOAN_OFFICER);
+    user.setRole(role);
     user.setEnabled(true);
     users.save(user);
   }

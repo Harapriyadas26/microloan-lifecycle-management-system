@@ -47,6 +47,12 @@ public class OfficerLoanController {
     return loans.reevaluate(id);
   }
 
+  @PostMapping("/{id}/income-simulation")
+  public IncomeVerificationResponse simulateIncome(@PathVariable Long id,
+      @RequestParam String scenario) {
+    return loans.simulateIncome(id, scenario);
+  }
+
   @io.swagger.v3.oas.annotations.Operation(summary = "decide")
   @PostMapping("/{id}/decision")
   public LoanDecisionResponse decide(
