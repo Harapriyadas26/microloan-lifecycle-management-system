@@ -26,11 +26,7 @@ export default function LoansPage({ officer = false }) {
   );
   return (
     <>
-      <PageHeader title={officer ? "Loan queue" : "Your applications"}>
-        {officer
-          ? "Review each application with the full picture."
-          : "Every application, every update, in one place."}
-      </PageHeader>
+      <PageHeader title={officer ? "Loan queue" : "Your applications"} />
       <section className="panel">
         <div className="row">
           <h2>{officer ? "All applications" : "Application history"}</h2>
@@ -62,12 +58,7 @@ export default function LoansPage({ officer = false }) {
         {state.loading ? (
           <Loading />
         ) : !state.data?.length ? (
-          <Empty>
-            No applications {status ? "with this status" : "yet"}.{" "}
-            {officer
-              ? "New submissions will appear here."
-              : "Your next step starts with your first application."}
-          </Empty>
+          <Empty>No applications {status ? "with this status" : "yet"}.</Empty>
         ) : (
           <div className="table-scroll">
             <table>

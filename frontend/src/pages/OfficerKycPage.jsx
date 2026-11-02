@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { api, viewDocument } from "../api/apiClient";
 import {
   PageHeader,
@@ -12,8 +13,9 @@ import {
   ConfirmDialog,
 } from "../components/UI";
 export default function OfficerKycPage() {
-  const [status, setStatus] = useState("PENDING"),
-    [error, setError] = useState(null),
+  const [searchParams, setSearchParams] = useSearchParams();
+  const status = searchParams.get("status") ?? "PENDING";
+  const [error, setError] = useState(null),
     [busy, setBusy] = useState(false),
     [confirmation, setConfirmation] = useState(null),
     [success, setSuccess] = useState("");
@@ -56,9 +58,7 @@ export default function OfficerKycPage() {
   }
   return (
     <>
-      <PageHeader eyebrow="OFFICER WORKSPACE" title="KYC review">
-        Verify the details behind every application.
-      </PageHeader>
+      <PageHeader eyebrow="OFFICER WORKSPACE" title="KYC review" />
       <ErrorMessage error={error || state.error} />
       {success && (
         <div className="alert success" role="status">
@@ -72,7 +72,7 @@ export default function OfficerKycPage() {
             label="Document status"
             as="select"
             value={status}
-            onChange={(e) => setStatus(e.target.value)}
+            onChange={(e) => setSearchParams({ status: e.target.value })}
           >
             <option value="">All statuses</option>
             {["PENDING", "CONFLICT", "VERIFIED", "REJECTED"].map((s) => (
@@ -83,7 +83,7 @@ export default function OfficerKycPage() {
         {state.loading ? (
           <Loading />
         ) : !state.data?.length ? (
-          <Empty>No documents awaiting attention in this queue.</Empty>
+          <Empty>No documents in this queue.</Empty>
         ) : (
           state.data.map((d) => (
             <article key={d.id} className="document-card">

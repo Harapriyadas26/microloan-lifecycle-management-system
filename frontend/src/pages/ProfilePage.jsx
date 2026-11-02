@@ -54,7 +54,7 @@ export default function ProfilePage() {
   return (
     <>
       <PageHeader title="Your profile">
-        A few details to help us understand your application.
+        Keep your contact and income details up to date.
       </PageHeader>
       {state.loading ? (
         <Loading />
@@ -71,7 +71,6 @@ export default function ProfilePage() {
               <span className="step-number">01</span>
               <div>
                 <h2>Personal & contact details</h2>
-                <p>Keep these details accurate and up to date.</p>
               </div>
             </div>
             <div className="form-grid">
@@ -99,7 +98,7 @@ export default function ProfilePage() {
               <span className="step-number">02</span>
               <div>
                 <h2>Employment & income</h2>
-                <p>Used for your transparent risk assessment.</p>
+                <p>Used in the loan assessment.</p>
               </div>
             </div>
             <div className="form-grid">

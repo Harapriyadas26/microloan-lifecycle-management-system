@@ -40,6 +40,9 @@ class WorkflowIntegrationTests {
   @Autowired
   KycDocumentRepository documents;
 
+  @Autowired LoanAccountRepository accountRepository;
+  @Autowired InstallmentRepository installmentRepository;
+
   static final Path UPLOADS;
 
   static {
@@ -145,6 +148,73 @@ class WorkflowIntegrationTests {
     )
       .body()
       .get("token");
+  }
+
+  String admin() throws Exception {
+    String email = UUID.randomUUID() + "@admin.example.test";
+    User u = new User();u.setEmail(email);u.setFullName("Demo sanction manager");
+    u.setPasswordHash(encoder.encode(password));u.setRole(Role.ADMIN);users.saveAndFlush(u);
+    return (String) call("POST","/api/auth/login",null,
+      Map.of("email",email,"password",password)).body().get("token");
+  }
+
+  @Test
+  void disbursementSchedulePaymentAndClosure() throws Exception {
+    var s=setup();String officer=officer(),manager=admin();
+    String base="/api/officer/loans/"+s.loan();
+    assertEquals(200,call("PATCH","/api/officer/kyc/"+s.kyc()+"/verify",officer,null).status());
+    assertEquals(200,call("PATCH",base+"/review",officer,null).status());
+    assertEquals(200,call("POST",base+"/income-simulation?scenario=MATCH",officer,null).status());
+    assertEquals(200,call("POST",base+"/decision",officer,Map.of("decision","APPROVED",
+      "reason","Fictional repayment workflow","approvedAmount",100000,"annualInterestRate",12)).status());
+    assertEquals(403,call("POST",base+"/disbursement",officer,Map.of("reference","DISB-TEST-01")).status());
+    var account=call("POST",base+"/disbursement",manager,Map.of("reference","DISB-TEST-01"));
+    assertEquals(200,account.status());assertEquals(24,((List<?>)account.body().get("installments")).size());
+    assertEquals(409,call("POST",base+"/disbursement",manager,Map.of("reference","DISB-TEST-02")).status());
+    var accountId=accountRepository.findByApplicationId(s.loan()).orElseThrow().id;
+    var first=installmentRepository.findByAccountIdOrderByNumberAsc(accountId).getFirst();
+    first.dueDate=java.time.LocalDate.now().minusDays(9);installmentRepository.saveAndFlush(first);
+    var beforeAccrual=call("GET","/api/officer/reports/portfolio",officer,null);
+    assertEquals(200,beforeAccrual.status());
+    assertTrue(((Number)beforeAccrual.body().get("overdueInstallments")).intValue()>0);
+    assertEquals(0,installmentRepository.findById(first.id).orElseThrow().penaltyDue.signum());
+    var overdue=call("GET",base+"/account",officer,null);
+    var firstView=(Map<?,?>)((List<?>)overdue.body().get("installments")).getFirst();
+    assertEquals("OVERDUE",firstView.get("status"));
+    assertTrue(new java.math.BigDecimal(firstView.get("penaltyDue").toString()).signum()>0);
+    assertEquals(200,call("GET","/api/borrower/loans/"+s.loan()+"/account",s.token(),null).status());
+    assertEquals(404,call("GET","/api/borrower/loans/"+s.loan()+"/account",
+      (String)register().get("token"),null).status());
+    assertEquals(400,call("POST",base+"/payments",officer,Map.of("reference","PAY-OVER",
+      "amount",999999)).status());
+    var part=call("POST",base+"/payments",officer,Map.of("reference","PAY-PART-01","amount",1000));
+    assertEquals(200,part.status());
+    assertEquals(409,call("POST",base+"/payments",officer,Map.of("reference","PAY-PART-01","amount",1000)).status());
+    java.math.BigDecimal balance=new java.math.BigDecimal(part.body().get("outstanding").toString());
+    var closed=call("POST",base+"/payments",officer,Map.of("reference","PAY-FINAL-01","amount",balance));
+    assertEquals(200,closed.status());assertEquals("CLOSED",closed.body().get("status"));
+    assertEquals(409,call("POST",base+"/payments",officer,Map.of("reference","PAY-LATE-01","amount",1)).status());
+    assertEquals(200,call("GET","/api/officer/reports/portfolio",officer,null).status());
+  }
+
+  @Test
+  void zeroInterestSchedulePreservesApprovedPrincipal() throws Exception {
+    var s=setup();String officer=officer(),manager=admin();
+    String base="/api/officer/loans/"+s.loan();
+    assertEquals(200,call("PATCH","/api/officer/kyc/"+s.kyc()+"/verify",officer,null).status());
+    assertEquals(200,call("PATCH",base+"/review",officer,null).status());
+    assertEquals(200,call("POST",base+"/income-simulation?scenario=MATCH",officer,null).status());
+    assertEquals(200,call("POST",base+"/decision",officer,Map.of("decision","APPROVED",
+      "reason","Zero rate schedule example","approvedAmount",100000,"annualInterestRate",0)).status());
+    var account=call("POST",base+"/disbursement",manager,Map.of("reference","DISB-ZERO-01"));
+    assertEquals(200,account.status());
+    java.math.BigDecimal total=java.math.BigDecimal.ZERO;
+    for(Object item:(List<?>)account.body().get("installments")) {
+      Map<?,?> row=(Map<?,?>)item;
+      assertEquals(0,new java.math.BigDecimal(row.get("interestDue").toString()).signum());
+      total=total.add(new java.math.BigDecimal(row.get("principalDue").toString()));
+    }
+    assertEquals(0,new java.math.BigDecimal("100000").compareTo(total));
   }
 
   Map<String, Object> profile() {

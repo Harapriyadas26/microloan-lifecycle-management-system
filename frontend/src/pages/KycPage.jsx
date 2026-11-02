@@ -47,9 +47,7 @@ export default function KycPage() {
   }
   return (
     <>
-      <PageHeader title="Your documents">
-        A secure first step towards your loan application.
-      </PageHeader>
+      <PageHeader title="Your documents" />
       <ErrorMessage error={error || state.error} />
       {success && (
         <div className="alert success" role="status">
@@ -93,12 +91,12 @@ export default function KycPage() {
         <section className="panel">
           <h2>Submitted documents</h2>
           <p className="muted">
-            One document per type. Verified documents cannot be replaced.
+            One per type. Verified documents cannot be replaced.
           </p>
           {state.loading ? (
             <Loading />
           ) : !state.data?.length ? (
-            <Empty>Your documents will appear here after upload.</Empty>
+            <Empty>No documents uploaded yet.</Empty>
           ) : (
             state.data.map((d) => (
               <article className="document-card" key={d.id}>

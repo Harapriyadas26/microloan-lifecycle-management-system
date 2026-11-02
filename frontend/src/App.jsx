@@ -11,6 +11,7 @@ import LoanApplicationPage from "./pages/LoanApplicationPage";
 import LoansPage from "./pages/LoansPage";
 import LoanDetailsPage from "./pages/LoanDetailsPage";
 import OfficerKycPage from "./pages/OfficerKycPage";
+import PortfolioPage from "./pages/PortfolioPage";
 function Home() {
   const { user } = useAuth();
   return (
@@ -26,8 +27,8 @@ export default function App() {
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Home />} />
-          <Route path="/login" element={<AuthPage />} />
-          <Route path="/register" element={<AuthPage register />} />
+          <Route path="/login" element={<AuthPage key="login" />} />
+          <Route path="/register" element={<AuthPage key="register" register />} />
           <Route element={<ProtectedRoute />}>
             <Route element={<Workspace />}>
               <Route element={<RoleRoute />}>
@@ -48,6 +49,7 @@ export default function App() {
                 <Route path="/officer" element={<Dashboard officer />} />
                 <Route path="/officer/kyc" element={<OfficerKycPage />} />
                 <Route path="/officer/loans" element={<LoansPage officer />} />
+                <Route path="/officer/reports" element={<PortfolioPage />} />
                 <Route
                   path="/officer/loans/:id"
                   element={<LoanDetailsPage officer />}

@@ -16,13 +16,15 @@ export default function AuthPage({ register = false }) {
     );
   async function submit(e) {
     e.preventDefault();
+    const form = e.currentTarget;
     setError(null);
     setBusy(true);
     try {
       const u = await authenticate(
         register ? "register" : "login",
-        Object.fromEntries(new FormData(e.currentTarget)),
+        Object.fromEntries(new FormData(form)),
       );
+      form.reset();
       navigate(officerRole(u.role) ? "/officer" : "/borrower");
     } catch (e) {
       setError(e);
@@ -34,51 +36,34 @@ export default function AuthPage({ register = false }) {
     <div className="auth-page">
       <section className="auth-story">
         <div className="brand">
-          <span className="brand-mark">m.</span> microloan
+          <img src="/microloan-mark.svg" className="brand-mark" alt="" />{" "}
+          microloan
         </div>
         <div>
-          <div className="eyebrow">CLEAR STEPS. BETTER FUTURES.</div>
+          <div className="eyebrow">MICROLOAN PORTAL</div>
           <h1>
-            A little support.
-            <br />A world of
+            Apply for a loan.
             <br />
-            <em>possibility.</em>
+            Track every step.
           </h1>
           <p>
-            Apply with confidence. Understand your assessment.
-            <br />
-            Follow every step in one simple workspace.
+            Submit documents, follow application updates and manage your loan
+            account in one place.
           </p>
-          <div className="story-graphic">
-            <span>
-              01
-              <br />
-              <small>Apply</small>
-            </span>
-            <i>→</i>
-            <span>
-              02
-              <br />
-              <small>Assess</small>
-            </span>
-            <i>→</i>
-            <span>
-              03
-              <br />
-              <small>Decide</small>
-            </span>
-          </div>
         </div>
-        <small>MICROLOAN LIFECYCLE MANAGEMENT SYSTEM</small>
       </section>
       <section className="auth-form">
         <div className="auth-card">
-          <div className="eyebrow">LET’S GET STARTED</div>
-          <h2>{register ? "Create your account" : "Welcome back"}</h2>
+          <div className="eyebrow">
+            {register ? "BORROWER REGISTRATION" : "SECURE SIGN IN"}
+          </div>
+          <h2>
+            {register ? "Create your account" : "Sign in to your account"}
+          </h2>
           <p>
             {register
-              ? "Your next chapter starts here."
-              : "Sign in to continue your loan journey."}
+              ? "Register as a borrower to apply for a loan and track its progress."
+              : "Enter your registered email address and password to continue."}
           </p>
           <ErrorMessage error={error} />
           <form onSubmit={submit}>
@@ -108,24 +93,23 @@ export default function AuthPage({ register = false }) {
               maxLength={72}
               autoComplete={register ? "new-password" : "current-password"}
             />
+            {register && <small className="auth-hint">Use at least 8 characters.</small>}
             <button disabled={busy}>
               {busy
-                ? "Please wait…"
+                ? register
+                  ? "Creating account…"
+                  : "Signing in…"
                 : register
-                  ? "Create account →"
-                  : "Sign in →"}
+                  ? "Create account"
+                  : "Sign in"}
             </button>
           </form>
           <p>
-            {register ? "Already registered?" : "New to Microloan?"}{" "}
+            {register ? "Already have an account?" : "New borrower?"}{" "}
             <Link to={register ? "/login" : "/register"}>
               {register ? "Sign in" : "Create an account"}
             </Link>
           </p>
-          <small className="muted">
-            Your details stay in your workspace. Use fictional documents for
-            this academic demo.
-          </small>
         </div>
       </section>
     </div>

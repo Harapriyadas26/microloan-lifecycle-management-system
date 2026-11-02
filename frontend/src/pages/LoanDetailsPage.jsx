@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { api, viewDocument } from "../api/apiClient";
+import LoanAccountPanel from "./LoanAccountPanel";
 import {
   PageHeader,
   ErrorMessage,
@@ -48,6 +49,7 @@ export default function LoanDetailsPage({ officer = false }) {
     }
     setConfirm({
       title: "Record final " + decision.toLowerCase() + " decision?",
+      description: "Final decisions cannot be changed.",
       run: () => action(base + "/decision", "POST", body),
     });
   }
@@ -59,9 +61,7 @@ export default function LoanDetailsPage({ officer = false }) {
       <PageHeader
         eyebrow={officer ? "OFFICER WORKSPACE" : "YOUR APPLICATION"}
         title={"Application ML-" + String(id).padStart(4, "0")}
-      >
-        The details, the assessment, and the next step.
-      </PageHeader>
+      />
       <ErrorMessage error={error || state.error} />
       {success && (
         <div className="alert success" role="status">
@@ -93,26 +93,46 @@ export default function LoanDetailsPage({ officer = false }) {
             <div className="two-column">
               {officer && active && (
                 <section className="panel">
-                  <h2>Fictional bank income simulation</h2>
-                  <p>Demo data only. This does not connect to a real bank or prove real income.</p>
-                  <Field label="Bank scenario" as="select" value={bankScenario}
-                    onChange={(e) => setBankScenario(e.target.value)}>
+                  <h2>Income simulation</h2>
+                  <p>Simulated data only. This does not verify real income.</p>
+                  <Field
+                    label="Bank scenario"
+                    as="select"
+                    value={bankScenario}
+                    onChange={(e) => setBankScenario(e.target.value)}
+                  >
                     <option value="MATCH">Matching salary credits</option>
                     <option value="REVIEW">Moderate mismatch</option>
                     <option value="CONFLICT">Major income conflict</option>
                   </Field>
-                  <button className="secondary" disabled={busy}
-                    onClick={() => action(base + "/income-simulation?scenario=" + bankScenario)}>
+                  <button
+                    className="secondary"
+                    disabled={busy}
+                    onClick={() =>
+                      action(
+                        base + "/income-simulation?scenario=" + bankScenario,
+                      )
+                    }
+                  >
                     Run bank simulation
                   </button>
-                  {d.incomeVerification && <p role="status">
-                    {d.incomeVerification.status}: declared {money(d.incomeVerification.declaredIncome)},
-                    simulated credits {money(d.incomeVerification.observedIncome)}.
-                  </p>}
-                  {d.incomeVerification && <p className="muted">
-                    Six fictional monthly credits: {d.incomeVerification.monthlyCredits.map(money).join(", ")}.
-                    Source: {d.incomeVerification.source}.
-                  </p>}
+                  {d.incomeVerification && (
+                    <p role="status">
+                      {d.incomeVerification.status}: declared{" "}
+                      {money(d.incomeVerification.declaredIncome)}, simulated
+                      credits {money(d.incomeVerification.observedIncome)}.
+                    </p>
+                  )}
+                  {d.incomeVerification && (
+                    <details className="evidence-details">
+                      <summary>View simulated monthly credits</summary>
+                      <p>
+                        {d.incomeVerification.monthlyCredits
+                          .map(money)
+                          .join(", ")}
+                      </p>
+                    </details>
+                  )}
                 </section>
               )}
               <section className="panel">
@@ -176,15 +196,23 @@ export default function LoanDetailsPage({ officer = false }) {
                         </button>
                       </p>
                     )}
-                    {officer && <p className="muted">Approval requires verified KYC and matching simulated income. Loan officers may sanction up to ₹1,00,000; larger approvals require an ADMIN.</p>}
+                    {officer && (
+                      <p className="muted">
+                        Approval needs verified KYC and simulated income
+                        evidence. Officers can approve up to ₹1,00,000; larger
+                        amounts require an admin.
+                      </p>
+                    )}
                   </>
                 ) : (
                   <p>No assessment available.</p>
                 )}
               </section>
               <section className="panel">
-                <h2>{d.decision ? "Final decision" : "What happens next?"}</h2>
-                {officer && !active && d.incomeVerification && <p>Income simulation: {d.incomeVerification.status}</p>}
+                <h2>{d.decision ? "Final decision" : "Decision"}</h2>
+                {officer && !active && d.incomeVerification && (
+                  <p>Income simulation: {d.incomeVerification.status}</p>
+                )}
                 {d.decision ? (
                   <>
                     <StatusBadge status={d.decision.decision} />
@@ -206,13 +234,10 @@ export default function LoanDetailsPage({ officer = false }) {
                   <p>This application was cancelled.</p>
                 ) : (
                   <>
-                    <p>
-                      A loan officer will review the documents and assessment
-                      before recording a decision.
-                    </p>
+                    <p>Awaiting officer review.</p>
                     <div className="notice">
-                      Final approval requires verified KYC. The risk score is a
-                      recommendation.
+                      Approval requires verified KYC. The risk score is
+                      advisory.
                     </div>
                   </>
                 )}
@@ -231,6 +256,8 @@ export default function LoanDetailsPage({ officer = false }) {
                     onClick={() =>
                       setConfirm({
                         title: "Cancel this application?",
+                        description:
+                          "You can submit a new application after cancellation.",
                         run: () => action(base + "/cancel", "PATCH"),
                       })
                     }
@@ -287,6 +314,9 @@ export default function LoanDetailsPage({ officer = false }) {
                 )}
               </section>
             </div>
+            {a.status === "APPROVED" && (
+              <LoanAccountPanel id={id} officer={officer} />
+            )}
             {officer && (
               <section className="panel">
                 <h2>Borrower information</h2>
@@ -352,8 +382,7 @@ export default function LoanDetailsPage({ officer = false }) {
           onClose={() => setConfirm(null)}
           onConfirm={confirm.run}
         >
-          Please confirm before continuing. Final loan decisions cannot be
-          changed.
+          {confirm.description}
         </ConfirmDialog>
       )}
     </>

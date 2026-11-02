@@ -25,9 +25,7 @@ export default function LoanApplicationPage() {
   }
   return (
     <>
-      <PageHeader title="Make your next move">
-        Tell us what you have in mind. We’ll make the assessment clear.
-      </PageHeader>
+      <PageHeader title="Apply for a loan" />
       <ErrorMessage error={error} />
       <div className="two-column">
         <form className="panel" onSubmit={submit}>
@@ -84,7 +82,7 @@ export default function LoanApplicationPage() {
           </div>
           <Field
             name="purposeDescription"
-            label="Tell us more about the purpose"
+            label="Purpose details"
             as="textarea"
             maxLength={300}
             required={purpose === "OTHER"}
@@ -95,37 +93,25 @@ export default function LoanApplicationPage() {
           </button>
         </form>
         <aside className="panel guide">
-          <div className="eyebrow">BEFORE YOU APPLY</div>
-          <h2>A clear path forward.</h2>
+          <div className="eyebrow">APPLICATION CHECKLIST</div>
+          <h2>Before you submit</h2>
           <ol>
             <li>
               <strong>Complete your profile</strong>
-              <p>Add your contact, employment and income details.</p>
+              <p>Contact and income details are required.</p>
             </li>
             <li>
-              <strong>Submit your KYC</strong>
+              <strong>Upload an ID document</strong>
               <p>
-                A pending document lets you apply. Verification is required for
-                approval.
+                You can apply while it is pending. Approval needs verification.
               </p>
             </li>
             <li>
-              <strong>Understand your assessment</strong>
-              <p>See your risk factors and recommendation immediately.</p>
-            </li>
-            <li>
-              <strong>Follow the decision</strong>
-              <p>
-                A loan officer reviews your application and records the final
-                outcome.
-              </p>
+              <strong>Check your request</strong>
+              <p>₹1,000–₹5,00,000 over 3–60 months.</p>
             </li>
           </ol>
-          <small>
-            ₹1,000–₹5,00,000 · 3–60 months
-            <br />
-            One active application at a time.
-          </small>
+          <small>One active application at a time.</small>
         </aside>
       </div>
     </>

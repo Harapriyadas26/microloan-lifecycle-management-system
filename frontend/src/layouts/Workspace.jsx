@@ -8,6 +8,7 @@ export default function Workspace() {
         ["/officer", "Overview", "◫"],
         ["/officer/kyc", "KYC review", "▣"],
         ["/officer/loans", "Loan queue", "↗"],
+        ["/officer/reports", "Portfolio report", "▤"],
       ]
     : [
         ["/borrower", "Overview", "◫"],
@@ -20,8 +21,8 @@ export default function Workspace() {
     <div className="workspace">
       <aside className="sidebar">
         <Link to={officer ? "/officer" : "/borrower"} className="brand">
-          <span className="brand-mark">m.</span> microloan
-          <span className="brand-dot">●</span>
+          <img src="/microloan-mark.svg" className="brand-mark" alt="" />{" "}
+          microloan
         </Link>
         <div className="workspace-label">
           {officer ? "OFFICER WORKSPACE" : "BORROWER WORKSPACE"}
@@ -38,15 +39,6 @@ export default function Workspace() {
             </NavLink>
           ))}
         </nav>
-        <div className="sidebar-note">
-          <span>SMALL LOANS. BIG POSSIBILITIES.</span>
-          <p>
-            Every next step starts
-            <br />
-            with a little support.
-          </p>
-          <div className="note-art">↗</div>
-        </div>
         <div className="account">
           <div className="avatar">{user.fullName?.slice(0, 1)}</div>
           <div>
@@ -60,16 +52,14 @@ export default function Workspace() {
       </aside>
       <div className="main-shell">
         <div className="topbar">
-          <span>Microloan lifecycle management</span>
-          <span className="checkpoint">● First 50% checkpoint</span>
+          <span className="topbar-title">MICROLOAN / WORKSPACE</span>
+          <span className="checkpoint">
+            {officer ? "Officer" : "Borrower"} account
+          </span>
         </div>
         <main>
           <Outlet />
         </main>
-        <footer>
-          Microloan · A clearer path to responsible borrowing{" "}
-          <span>Academic demonstration</span>
-        </footer>
       </div>
     </div>
   );
